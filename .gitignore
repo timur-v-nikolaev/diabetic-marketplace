@@ -1,0 +1,39 @@
+# Backend
+backend/node_modules
+backend/dist
+backend/.env
+backend/.env.local
+backend/.DS_Store
+backend/npm-debug.log*
+backend/yarn-debug.log*
+backend/yarn-error.log*
+
+# Frontend
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/build
+frontend/.env.local
+frontend/.DS_Store
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker
+
+# Environment
+*.env
+*.env.local
+.env.*.local

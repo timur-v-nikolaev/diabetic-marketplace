@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: diabetic-marketplace-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - diabetic-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: diabetic-marketplace-backend
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://admin:password@mongodb:27017/diabetic-marketplace?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - PORT=5000
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - diabetic-network
+    command: npm start
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: diabetic-marketplace-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:5001/api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/next.config.js:/app/next.config.js
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/postcss.config.js:/app/postcss.config.js
+    depends_on:
+      - backend
+    networks:
+      - diabetic-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  diabetic-network:
+    driver: bridge
