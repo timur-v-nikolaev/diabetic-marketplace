@@ -65,34 +65,30 @@ router.put('/auth/profile', authMiddleware, updateProfile);
 
 router.post('/auth/avatar', authMiddleware, uploadAvatar.single('avatar'), uploadAvatarController);
 
-// Statistics route с кешированием
-let statsCache: { data: any; timestamp: number } | null = null;
-const STATS_CACHE_TTL = 30000; // 30 секунд
+// Statistics route с улучшенным кешированием
+import { statsCache as globalStatsCache, withCache } from '../utils/cache';
 
 router.get('/stats', async (req: AuthRequest, res: Response) => {
   try {
-    const now = Date.now();
-    
-    // Проверяем кеш
-    if (statsCache && (now - statsCache.timestamp) < STATS_CACHE_TTL) {
-      return res.json(statsCache.data);
-    }
-    
-    const Listing = require('../models/listing.model').default;
-    
-    // Параллельные запросы для оптимизации
-    const [activeListings, sellers] = await Promise.all([
-      Listing.countDocuments({ status: 'active' }),
-      Listing.distinct('sellerId', { status: 'active' })
-    ]);
-    
-    const data = {
-      activeListings,
-      sellers: sellers.length
-    };
-    
-    // Сохраняем в кеш
-    statsCache = { data, timestamp: now };
+    const data = await withCache(
+      globalStatsCache,
+      'global-stats',
+      async () => {
+        const Listing = require('../models/listing.model').default;
+        
+        // Параллельные запросы для оптимизации
+        const [activeListings, sellers] = await Promise.all([
+          Listing.countDocuments({ status: 'active' }),
+          Listing.distinct('sellerId', { status: 'active' })
+        ]);
+        
+        return {
+          activeListings,
+          sellers: sellers.length
+        };
+      },
+      30000 // 30 секунд TTL
+    );
     
     res.json(data);
   } catch (error) {

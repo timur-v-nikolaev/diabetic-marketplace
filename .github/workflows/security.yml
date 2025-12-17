@@ -1,0 +1,61 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Запуск каждый понедельник в 00:00
+    - cron: '0 0 * * 1'
+  push:
+    branches: [main]
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Backend npm audit
+        working-directory: ./backend
+        run: |
+          npm ci
+          npm audit --json > audit-backend.json || true
+      
+      - name: Frontend npm audit
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm audit --json > audit-frontend.json || true
+      
+      - name: Upload Audit Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit
+          path: |
+            backend/audit-backend.json
+            frontend/audit-frontend.json
+
+  code-scan:
+    name: CodeQL Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript, typescript
+      
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+      
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
