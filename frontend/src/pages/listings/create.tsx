@@ -143,7 +143,7 @@ export default function CreateListing() {
 
       console.log('Создаю объявление:', { ...formData, images });
 
-      const response = await listingsAPI.createListing({
+      const response = await listingsAPI.create({
         title: formData.title,
         description: formData.description,
         category: formData.category,

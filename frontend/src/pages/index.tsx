@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../hooks/useAuth';
 import { listingsAPI } from '../services/api';
@@ -209,7 +209,7 @@ export default function Home() {
               className="px-4 py-3 border-2 border-warm-300 rounded-xl focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all"
             />
             <button
-              onClick={handleFilter}
+              onClick={() => handleFilter()}
               className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all font-semibold shadow-soft hover:shadow-medium"
             >
               Поиск
