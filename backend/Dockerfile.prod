@@ -1,0 +1,27 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Копируем package files
+COPY package*.json ./
+
+# Устанавливаем только production зависимости
+RUN npm ci --only=production
+
+# Копируем исходники
+COPY . .
+
+# Компилируем TypeScript
+RUN npm install -g typescript ts-node
+RUN npm run build
+
+# Удаляем dev зависимости и исходники
+RUN npm prune --production
+RUN rm -rf src
+
+# Создаем директорию для uploads
+RUN mkdir -p uploads
+
+EXPOSE 5000
+
+CMD ["node", "dist/index.js"]

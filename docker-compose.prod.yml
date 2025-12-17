@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:5.0
+    container_name: diabetic-marketplace-mongo-prod
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - diabetic-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: diabetic-marketplace-backend-prod
+    restart: always
+    ports:
+      - "5001:5000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017/diabetic-marketplace?authSource=admin
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=5000
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - diabetic-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    container_name: diabetic-marketplace-frontend-prod
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    depends_on:
+      - backend
+    networks:
+      - diabetic-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: diabetic-marketplace-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./backend/uploads:/var/www/uploads
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - diabetic-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  diabetic-network:
+    driver: bridge

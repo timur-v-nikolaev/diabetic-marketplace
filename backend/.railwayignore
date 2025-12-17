@@ -1,0 +1,7 @@
+# Railway Backend Deployment
+node_modules/
+dist/
+uploads/
+.env
+*.log
+.DS_Store

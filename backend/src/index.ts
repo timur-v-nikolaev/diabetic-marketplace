@@ -14,7 +14,10 @@ app.disable('x-powered-by'); // Скрываем информацию о Express
 app.use(compression()); // Сжатие ответов для уменьшения размера данных
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*',
+  credentials: true
+}));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
@@ -26,7 +29,11 @@ app.use('/api', routes);
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK' });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Error handling
