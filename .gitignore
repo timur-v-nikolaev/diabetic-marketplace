@@ -3,7 +3,8 @@ backend/node_modules
 backend/dist
 backend/.env
 backend/.env.local
-backend/.DS_Store
+backend/.env.production
+backend/.env.staging
 backend/npm-debug.log*
 backend/yarn-debug.log*
 backend/yarn-error.log*
@@ -14,10 +15,15 @@ frontend/.next
 frontend/out
 frontend/build
 frontend/.env.local
-frontend/.DS_Store
 frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
+
+# Uploads (keep folder structure, ignore content)
+backend/uploads/avatars/*
+backend/uploads/listings/*
+!backend/uploads/avatars/.gitkeep
+!backend/uploads/listings/.gitkeep
 
 # IDE
 .vscode
@@ -28,12 +34,26 @@ frontend/yarn-error.log*
 
 # OS
 .DS_Store
+**/.DS_Store
 Thumbs.db
 
 # Docker
 .docker
 
 # Environment
-*.env
-*.env.local
+.env.local
 .env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Build artifacts
+*.tgz
+*.tar.gz
