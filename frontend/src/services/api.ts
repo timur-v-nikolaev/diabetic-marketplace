@@ -4,6 +4,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
 
 const api = axios.create({
   baseURL: API_URL,
+  timeout: 30000, // 30 секунд timeout
 });
 
 // Add token to requests
@@ -14,6 +15,25 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Handle response errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Если токен истёк или невалиден - разлогиниваем
+    if (error.response?.status === 401) {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        // Редирект на логин только если не на странице логина/регистрации
+        const isAuthPage = window.location.pathname.includes('/auth/');
+        if (!isAuthPage) {
+          window.location.href = '/auth/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth API
 export const authAPI = {
@@ -32,7 +52,6 @@ export const authAPI = {
 export const listingsAPI = {
   getAll: (filters: any) => api.get('/listings', { params: filters }),
   getById: (id: string) => api.get(`/listings/${id}`),
-  createListing: (data: any) => api.post('/listings', data),
   create: (data: any) => api.post('/listings', data),
   update: (id: string, data: any) => api.put(`/listings/${id}`, data),
   delete: (id: string) => api.delete(`/listings/${id}`),

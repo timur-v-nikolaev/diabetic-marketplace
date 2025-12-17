@@ -1,5 +1,6 @@
 import Listing, { IListingDocument } from '../models/listing.model';
 import { IListing } from '../types/index';
+import { sanitizeSearchQuery, isValidObjectId } from '../utils/validators';
 
 export class ListingService {
   async createListing(data: Partial<IListing>): Promise<IListingDocument> {
@@ -17,17 +18,21 @@ export class ListingService {
       query.city = filters.city;
     }
     if (filters.minPrice && filters.maxPrice) {
-      query.price = { $gte: filters.minPrice, $lte: filters.maxPrice };
+      query.price = { $gte: Number(filters.minPrice), $lte: Number(filters.maxPrice) };
     }
     if (filters.search) {
-      query.$or = [
-        { title: { $regex: filters.search, $options: 'i' } },
-        { description: { $regex: filters.search, $options: 'i' } },
-      ];
+      // Санитизация поискового запроса для защиты от ReDoS
+      const sanitizedSearch = sanitizeSearchQuery(filters.search);
+      if (sanitizedSearch) {
+        query.$or = [
+          { title: { $regex: sanitizedSearch, $options: 'i' } },
+          { description: { $regex: sanitizedSearch, $options: 'i' } },
+        ];
+      }
     }
 
-    const page = filters.page || 1;
-    const limit = filters.limit || 10;
+    const page = Math.max(1, parseInt(filters.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(filters.limit) || 10)); // Лимит 1-100
     const skip = (page - 1) * limit;
 
     // Параллельные запросы для ускорения
@@ -61,6 +66,11 @@ export class ListingService {
   }
 
   async getListingById(id: string, userId?: string): Promise<any> {
+    // Валидация ObjectId
+    if (!isValidObjectId(id)) {
+      return null;
+    }
+    
     const listing = await Listing.findByIdAndUpdate(
       id,
       { $inc: { views: 1 } },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { authAPI } from '../services/api';
 
@@ -7,26 +7,40 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<any>(null);
   const router = useRouter();
+  const isMounted = useRef(true);
+
+  const fetchProfile = useCallback(async () => {
+    try {
+      const response = await authAPI.getProfile();
+      if (isMounted.current) {
+        setUser(response.data);
+      }
+    } catch (err) {
+      if (isMounted.current) {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
+    isMounted.current = true;
+    
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (token) {
       fetchProfile();
     } else {
       setLoading(false);
     }
-  }, []);
 
-  const fetchProfile = async () => {
-    try {
-      const response = await authAPI.getProfile();
-      setUser(response.data);
-    } catch (err) {
-      localStorage.removeItem('token');
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      isMounted.current = false;
+    };
+  }, [fetchProfile]);
 
   const register = async (data: { email: string; password: string; name: string; phone: string; city: string }) => {
     try {

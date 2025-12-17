@@ -3,6 +3,9 @@ import cors from 'cors';
 import compression from 'compression';
 import bodyParser from 'body-parser';
 import path from 'path';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import mongoSanitize from 'express-mongo-sanitize';
 import { config, connectDB } from './config';
 import routes from './routes';
 import { logger } from './utils/logger';
@@ -11,15 +14,39 @@ const app = express();
 
 // Security & Performance Middleware
 app.disable('x-powered-by'); // Скрываем информацию о Express
+app.use(helmet()); // Защита HTTP заголовков
 app.use(compression()); // Сжатие ответов для уменьшения размера данных
+
+// Rate limiting - защита от brute-force атак
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 100, // Лимит 100 запросов с одного IP
+  message: { error: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 минут
+  max: 5, // Лимит 5 попыток логина/регистрации
+  message: { error: 'Too many authentication attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(generalLimiter);
 
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true
 }));
-app.use(bodyParser.json({ limit: '50mb' }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({ limit: '10mb' })); // Уменьшен лимит для безопасности
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+app.use(mongoSanitize()); // Защита от NoSQL injection
+
+// Export authLimiter для использования в routes
+(app as any).authLimiter = authLimiter;
 
 // Статическая раздача файлов для загруженных изображений
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
