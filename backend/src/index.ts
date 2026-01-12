@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request } from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import bodyParser from 'body-parser';
@@ -45,7 +45,7 @@ const generalLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.path === '/health' || req.path === '/api/health',
+  skip: (req: Request) => req.path === '/health' || req.path === '/api/health',
 });
 
 const authLimiter = rateLimit({

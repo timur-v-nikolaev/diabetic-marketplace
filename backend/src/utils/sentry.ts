@@ -77,6 +77,8 @@ export const sentryErrorHandler = (err: Error, req: Request, res: Response, next
 export const sentryRequestHandler = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
+
+/**
  * Ручная отправка ошибки в Sentry
  */
 export const captureError = (error: Error, context?: Record<string, any>) => {
