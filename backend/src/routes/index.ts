@@ -236,6 +236,7 @@ router.get('/listings', optionalAuthMiddleware, validate(validateListingsQuery),
     const result = await listingService.getListings(filters, req.user?.id);
     res.json(result);
   } catch (error) {
+    console.error('Error fetching listings:', error);
     res.status(500).json({ error: 'Failed to fetch listings' });
   }
 });
