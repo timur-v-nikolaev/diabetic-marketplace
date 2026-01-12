@@ -12,6 +12,9 @@ import { logger } from './utils/logger';
 
 const app = express();
 
+// Trust proxy for rate limiting behind nginx/cloudflare
+app.set('trust proxy', 1);
+
 // Security & Performance Middleware
 app.disable('x-powered-by'); // Скрываем информацию о Express
 
