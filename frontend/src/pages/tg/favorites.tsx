@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
 import AvitoHeader from '../../components/ui/AvitoHeader';
 import AvitoBottomNav from '../../components/ui/AvitoBottomNav';
 import AvitoProductCard from '../../components/ui/AvitoProductCard';
@@ -18,7 +17,6 @@ interface Listing {
 }
 
 export default function TGFavoritesPage() {
-  const router = useRouter();
   const [favorites, setFavorites] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);

@@ -16,27 +16,6 @@ const CATEGORIES = [
   'Другое',
 ];
 
-declare global {
-  interface Window {
-    Telegram?: {
-      WebApp?: {
-        HapticFeedback?: {
-          impactOccurred: (style: string) => void;
-          notificationOccurred: (type: string) => void;
-        };
-        showAlert?: (message: string) => void;
-        MainButton?: {
-          text: string;
-          show: () => void;
-          hide: () => void;
-          onClick: (callback: () => void) => void;
-          offClick: (callback: () => void) => void;
-        };
-      };
-    };
-  }
-}
-
 export default function TGCreateListing() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -56,10 +35,11 @@ export default function TGCreateListing() {
 
   const haptic = (type: 'light' | 'medium' | 'success' | 'error') => {
     try {
+      const tg = (window as any).Telegram?.WebApp;
       if (type === 'success' || type === 'error') {
-        window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(type);
+        tg?.HapticFeedback?.notificationOccurred(type);
       } else {
-        window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(type);
+        tg?.HapticFeedback?.impactOccurred(type);
       }
     } catch {}
   };
@@ -79,7 +59,7 @@ export default function TGCreateListing() {
         price: Number(form.price),
       });
       haptic('success');
-      window.Telegram?.WebApp?.showAlert?.('Объявление создано!');
+      (window as any).Telegram?.WebApp?.showAlert?.('Объявление создано!');
       router.push('/tg');
     } catch (error: any) {
       haptic('error');
