@@ -8,74 +8,70 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Современная теплая палитра в стиле DiaTalks
-        'primary': {
-          50: '#fef5f0',
-          100: '#fde9dd',
-          200: '#fbd0bb',
-          300: '#f8af8e',
-          400: '#f58560',
-          500: '#f26642',
-          600: '#e04523',
-          700: '#ba3419',
-          800: '#982c19',
-          900: '#7d271a',
-        },
-        'secondary': {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-        },
-        'accent': {
-          50: '#fefce8',
-          100: '#fef9c3',
-          200: '#fef08a',
-          300: '#fde047',
-          400: '#facc15',
-          500: '#eab308',
-          600: '#ca8a04',
-          700: '#a16207',
-          800: '#854d0e',
-          900: '#713f12',
-        },
-        'success': {
-          light: '#86efac',
-          main: '#22c55e',
-          dark: '#16a34a',
-        },
-        'warm': {
-          50: '#fafaf9',
-          100: '#f5f5f4',
-          200: '#e7e5e4',
-          300: '#d6d3d1',
-          400: '#a8a29e',
-          500: '#78716c',
-          600: '#57534e',
-          700: '#44403c',
-          800: '#292524',
-          900: '#1c1917',
+        // Exact Avito color palette
+        'avito': {
+          // Primary blue - links, buttons (Авито использует этот синий)
+          'blue': '#0078d7',
+          'blue-hover': '#006cbe',
+          'blue-light': '#e6f3ff',
+          
+          // Turquoise/Teal - Avito brand color
+          'teal': '#00a0a6',
+          'teal-hover': '#008f94',
+          
+          // Green - "Разместить объявление" button
+          'green': '#00a86b',
+          'green-hover': '#009960',
+          'green-light': '#e6f7f0',
+          
+          // Background colors (Авито использует очень светлый серый)
+          'bg': '#f5f5f5',
+          'bg-card': '#ffffff',
+          'bg-secondary': '#f0f0f0',
+          'bg-hover': '#e8e8e8',
+          
+          // Text colors
+          'text': '#1a1a1a',
+          'text-secondary': '#6f6f6f',
+          'text-muted': '#999999',
+          
+          // Border colors  
+          'border': '#d9d9d9',
+          'border-light': '#ebebeb',
+          
+          // Price color (черный, жирный как у Авито)
+          'price': '#000000',
+          
+          // Status colors
+          'danger': '#d32f2f',
+          'warning': '#f5a623',
+          'success': '#00a86b',
+          
+          // Special
+          'delivery': '#00a0a6',
+          'pro': '#7b1fa2',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Manrope', 'Inter', 'sans-serif'],
+        'sans': ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       boxShadow: {
-        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'medium': '0 10px 40px -10px rgba(0, 0, 0, 0.1)',
-        'large': '0 20px 50px -12px rgba(0, 0, 0, 0.15)',
+        'avito': '0 1px 2px rgba(0, 0, 0, 0.06)',
+        'avito-hover': '0 4px 16px rgba(0, 0, 0, 0.12)',
+        'avito-card': '0 2px 4px rgba(0, 0, 0, 0.04)',
+        'avito-modal': '0 12px 40px rgba(0, 0, 0, 0.2)',
+        'avito-header': '0 1px 0 rgba(0, 0, 0, 0.1)',
       },
       borderRadius: {
-        'xl': '1rem',
-        '2xl': '1.5rem',
-        '3xl': '2rem',
+        'avito': '4px',
+        'avito-md': '6px',
+        'avito-lg': '8px',
+        'avito-xl': '12px',
+      },
+      fontSize: {
+        'avito-price': ['20px', { lineHeight: '24px', fontWeight: '700' }],
+        'avito-title': ['14px', { lineHeight: '20px', fontWeight: '400' }],
+        'avito-small': ['13px', { lineHeight: '18px' }],
       },
     },
   },

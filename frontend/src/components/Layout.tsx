@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import Footer from './Footer';
+import CookieBanner from './CookieBanner';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,10 +14,22 @@ export default function Layout({ children }: LayoutProps) {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Проверяем, находимся ли мы на странице Telegram Mini App
+  const isTelegramPage = router.pathname.startsWith('/tg');
+
   const handleLogout = () => {
     logout();
     router.push('/');
   };
+
+  // Для Telegram страниц показываем только контент без навигации
+  if (isTelegramPage) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {children}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-warm-50 via-white to-primary-50/30 flex flex-col">
@@ -202,6 +215,9 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Footer */}
       <Footer />
+
+      {/* Cookie Banner */}
+      <CookieBanner />
     </div>
   );
 }

@@ -46,6 +46,16 @@ export const authAPI = {
       'Content-Type': 'multipart/form-data',
     },
   }),
+  // ФЗ-152: Управление персональными данными
+  exportData: () => api.get('/auth/export-data'),
+  requestDeletion: () => api.post('/auth/request-deletion'),
+  cancelDeletion: () => api.post('/auth/cancel-deletion'),
+  // Telegram авторизация
+  telegramAuth: (initData: string) => api.post('/auth/telegram', { initData }),
+  telegramCompleteProfile: (data: any) => api.post('/auth/telegram/complete-profile', data),
+  // VK авторизация
+  vkAuth: (launchParams: string, userData?: any) => api.post('/auth/vk', { launchParams, userData }),
+  vkCompleteProfile: (data: any) => api.post('/auth/vk/complete-profile', data),
 };
 
 // Listings API
@@ -83,6 +93,25 @@ export const favoritesAPI = {
   addSeller: (sellerId: string) => api.post(`/favorites/sellers/${sellerId}`),
   removeSeller: (sellerId: string) => api.delete(`/favorites/sellers/${sellerId}`),
   getSellers: () => api.get('/favorites/sellers'),
+  // Избранные товары
+  addListing: (listingId: string) => api.post(`/favorites/listings/${listingId}`),
+  removeListing: (listingId: string) => api.delete(`/favorites/listings/${listingId}`),
+  getListings: () => api.get('/favorites/listings'),
+  toggle: (listingId: string) => api.post(`/favorites/listings/${listingId}/toggle`),
+  getAll: () => api.get('/favorites/listings'),
+};
+
+// Telegram Mini App API
+export const telegramAPI = {
+  auth: (initData: string) => api.post('/auth/telegram', { initData }),
+  completeProfile: (data: { phone: string; city: string }) => 
+    api.post('/auth/telegram/complete-profile', data),
+  getProfile: () => api.get('/auth/telegram/profile'),
+};
+
+// Categories API (для диабет товаров)
+export const categoriesAPI = {
+  getAll: () => api.get('/categories'),
 };
 
 // Chat API
@@ -90,10 +119,14 @@ export const chatAPI = {
   getOrCreateConversation: (listingId: string, sellerId: string) => 
     api.post('/conversations', { listingId, sellerId }),
   getConversations: () => api.get('/conversations'),
+  getConversation: (conversationId: string) =>
+    api.get(`/conversations/${conversationId}`),
   getMessages: (conversationId: string) => 
     api.get(`/conversations/${conversationId}/messages`),
   sendMessage: (conversationId: string, text: string) => 
     api.post('/conversations/messages', { conversationId, text }),
+  markAsRead: (conversationId: string) =>
+    api.put(`/conversations/${conversationId}/read`),
   deleteConversation: (conversationId: string) => 
     api.delete(`/conversations/${conversationId}`),
 };

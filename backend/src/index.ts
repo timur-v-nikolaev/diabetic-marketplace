@@ -14,7 +14,28 @@ const app = express();
 
 // Security & Performance Middleware
 app.disable('x-powered-by'); // Скрываем информацию о Express
-app.use(helmet()); // Защита HTTP заголовков
+
+// Helmet с настройками CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Для inline стилей
+      imgSrc: ["'self'", "data:", "blob:", "https:"], // Разрешаем внешние изображения
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      connectSrc: ["'self'", process.env.FRONTEND_URL || "http://localhost:3000"],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Для работы с внешними изображениями
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Для доступа к uploads
+}));
+
 app.use(compression()); // Сжатие ответов для уменьшения размера данных
 
 // Rate limiting - защита от brute-force атак
@@ -24,6 +45,7 @@ const generalLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => req.path === '/health' || req.path === '/api/health',
 });
 
 const authLimiter = rateLimit({
@@ -36,10 +58,33 @@ const authLimiter = rateLimit({
 
 app.use(generalLimiter);
 
-// Middleware
+// CORS с whitelist
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://diabet.market',
+  'https://www.diabet.market',
+  process.env.FRONTEND_URL,
+].filter(Boolean) as string[];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
-  credentials: true
+  origin: (origin, callback) => {
+    // Разрешаем запросы без origin (например, от мобильных приложений или curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin) || 
+        origin.endsWith('.trycloudflare.com') ||
+        origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400, // 24 часа кеширования preflight
 }));
 app.use(bodyParser.json({ limit: '10mb' })); // Уменьшен лимит для безопасности
 app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));

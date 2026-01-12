@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Head from 'next/head';
 import { chatAPI } from '@/services/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +24,7 @@ interface Conversation {
   listingId: Listing;
   lastMessage?: string;
   lastMessageAt?: string;
+  unreadCount?: number;
 }
 
 export default function MessagesPage() {
@@ -41,7 +43,7 @@ export default function MessagesPage() {
     if (user) {
       loadConversations();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
   const loadConversations = async () => {
     try {
@@ -68,21 +70,27 @@ export default function MessagesPage() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'только что';
-    if (diffMins < 60) return `${diffMins} мин назад`;
-    if (diffHours < 24) return `${diffHours} ч назад`;
-    if (diffDays < 7) return `${diffDays} дн назад`;
-    return d.toLocaleDateString('ru-RU');
+    if (diffMins < 1) return 'сейчас';
+    if (diffMins < 60) return `${diffMins}м`;
+    if (diffHours < 24) return `${diffHours}ч`;
+    if (diffDays < 7) return `${diffDays}д`;
+    return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
   if (authLoading || loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-warm-700 font-medium">Загрузка сообщений...</p>
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-4 sticky top-0 z-50">
+          <div className="max-w-4xl mx-auto flex items-center gap-4">
+            <Link href="/" className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <span className="text-xl">←</span>
+            </Link>
+            <h1 className="text-lg font-bold">Сообщения</h1>
           </div>
+        </header>
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-600">Загрузка чатов...</p>
         </div>
       </div>
     );
@@ -91,108 +99,149 @@ export default function MessagesPage() {
   return (
     <>
       <Head>
-        <title>Мои сообщения - Диабет Маркет</title>
+        <title>Сообщения - Диабет Маркет</title>
       </Head>
 
-      <div className="min-h-screen bg-gradient-to-br from-warm-50 to-primary-50/30">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-4xl font-display font-bold text-warm-900 mb-2">
-              💬 Мои сообщения
-            </h1>
-            <p className="text-warm-600">Общайтесь с покупателями и продавцами</p>
+      <div className="min-h-screen bg-gray-50 pb-24">
+        {/* Header */}
+        <header className="bg-gradient-to-r from-blue-500 to-blue-600 text-white sticky top-0 z-50">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href="/" className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center hover:bg-white/30 transition-all">
+                <span className="text-xl">←</span>
+              </Link>
+              <div>
+                <h1 className="text-lg font-bold">Сообщения</h1>
+                <p className="text-blue-100 text-sm">{conversations.length} диалогов</p>
+              </div>
+            </div>
           </div>
+        </header>
 
+        <div className="max-w-4xl mx-auto">
           {error && (
-            <div className="bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-xl mb-6">
-              ❌ {error}
+            <div className="mx-4 mt-4 p-4 bg-red-50 rounded-2xl flex items-center gap-3">
+              <span className="text-2xl">⚠️</span>
+              <p className="text-red-600 font-medium">{error}</p>
             </div>
           )}
 
           {conversations.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-soft p-12 text-center">
-              <div className="text-6xl mb-4">💬</div>
-              <p className="text-warm-700 text-lg mb-6">У вас пока нет сообщений</p>
-              <button
-                onClick={() => router.push('/listings')}
-                className="px-8 py-4 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 font-bold shadow-medium hover:shadow-large transition-all"
-              >
-                🛍️ Перейти к объявлениям
-              </button>
+            <div className="px-4 py-12">
+              <div className="bg-white rounded-3xl shadow-sm p-12 text-center">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-4xl">💬</span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Нет сообщений</h2>
+                <p className="text-gray-500 mb-6">
+                  Начните общение, написав продавцу
+                </p>
+                <Link
+                  href="/"
+                  className="inline-block px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-lg"
+                >
+                  Смотреть товары
+                </Link>
+              </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-soft overflow-hidden divide-y divide-warm-200">
-            {conversations.map((conversation) => {
-              const otherUser = getOtherParticipant(conversation.participants);
-              const listing = conversation.listingId;
+            <div className="divide-y divide-gray-100">
+              {conversations.map((conversation) => {
+                const otherUser = getOtherParticipant(conversation.participants);
+                const listing = conversation.listingId;
 
-              return (
-                <div
-                  key={conversation._id}
-                  onClick={() => router.push(`/messages/${conversation._id}`)}
-                  className="p-6 hover:bg-warm-50 cursor-pointer transition-all duration-200"
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Avatar */}
-                    <div className="flex-shrink-0">
-                      {otherUser?.avatar ? (
-                        <img
-                          src={`http://localhost:5001${otherUser.avatar}`}
-                          alt={otherUser.name}
-                          className="w-14 h-14 rounded-full object-cover border-2 border-primary-200"
-                        />
-                      ) : (
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-xl shadow-soft">
-                          {otherUser?.name.charAt(0).toUpperCase()}
+                return (
+                  <div
+                    key={conversation._id}
+                    onClick={() => router.push(`/messages/${conversation._id}`)}
+                    className="bg-white hover:bg-gray-50 cursor-pointer transition-all p-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Avatar */}
+                      <div className="relative">
+                        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                          {otherUser?.avatar ? (
+                            <img
+                              src={`http://localhost:5001${otherUser.avatar}`}
+                              alt={otherUser.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-white text-xl font-bold">
+                              {otherUser?.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
                         </div>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-grow min-w-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-bold text-lg text-warm-900 truncate">
-                          {otherUser?.name || 'Неизвестный пользователь'}
-                        </h3>
-                        <span className="text-xs text-warm-500 ml-2 flex-shrink-0 font-medium">
-                          🕐 {formatDate(conversation.lastMessageAt)}
-                        </span>
-                      </div>
-
-                      {/* Listing info */}
-                      <div className="flex items-center gap-3 mb-2 bg-warm-50 p-2 rounded-lg">
-                        {listing?.images && listing.images.length > 0 && (
-                          <img
-                            src={listing.images[0]}
-                            alt={listing.title}
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
+                        {conversation.unreadCount && conversation.unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                            {conversation.unreadCount}
+                          </span>
                         )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-warm-700 truncate font-medium">
-                            {listing?.title}
-                          </p>
-                          <p className="text-sm font-bold text-primary-600">
-                            {listing?.price.toLocaleString('ru-RU')} ₽
-                          </p>
-                        </div>
                       </div>
 
-                      {/* Last message */}
-                      {conversation.lastMessage && (
-                        <p className="text-sm text-warm-600 truncate">
-                          💬 {conversation.lastMessage}
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-bold text-gray-800 truncate">
+                            {otherUser?.name || 'Пользователь'}
+                          </h3>
+                          <span className="text-xs text-gray-400 ml-2 flex-shrink-0">
+                            {formatDate(conversation.lastMessageAt)}
+                          </span>
+                        </div>
+
+                        {/* Listing preview */}
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-xs text-gray-500 truncate">
+                            📦 {listing?.title}
+                          </span>
+                          <span className="text-xs font-bold text-blue-600">
+                            {listing?.price?.toLocaleString()} ₽
+                          </span>
+                        </div>
+
+                        {/* Last message */}
+                        <p className="text-sm text-gray-500 truncate">
+                          {conversation.lastMessage || 'Начните диалог...'}
                         </p>
-                      )}
+                      </div>
+
+                      {/* Arrow */}
+                      <span className="text-gray-300 text-xl">→</span>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
             </div>
           )}
         </div>
+
+        {/* Bottom Navigation */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 safe-area-pb">
+          <div className="max-w-4xl mx-auto flex justify-around">
+            <Link href="/" className="flex flex-col items-center gap-1 text-gray-400">
+              <span className="text-xl">🏠</span>
+              <span className="text-xs">Главная</span>
+            </Link>
+            <Link href="/listings" className="flex flex-col items-center gap-1 text-gray-400">
+              <span className="text-xl">📋</span>
+              <span className="text-xs">Объявления</span>
+            </Link>
+            <Link href="/listings/create" className="flex flex-col items-center gap-1 text-gray-400">
+              <div className="w-12 h-12 -mt-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <span className="text-white text-2xl">+</span>
+              </div>
+            </Link>
+            <Link href="/messages" className="flex flex-col items-center gap-1 text-blue-500">
+              <span className="text-xl">💬</span>
+              <span className="text-xs font-semibold">Сообщения</span>
+            </Link>
+            <Link href="/auth/profile" className="flex flex-col items-center gap-1 text-gray-400">
+              <span className="text-xl">👤</span>
+              <span className="text-xs">Профиль</span>
+            </Link>
+          </div>
+        </nav>
       </div>
     </>
   );

@@ -81,6 +81,56 @@ const userSchema = new Schema<IUserDocument, IUserModel>(
         ref: 'User',
       },
     ],
+    // Telegram Mini App поля
+    telegramId: {
+      type: Number,
+      unique: true,
+      sparse: true, // Позволяет null значения для уникального индекса
+    },
+    telegramUsername: {
+      type: String,
+      default: null,
+    },
+    // VK Mini App поля
+    vkId: {
+      type: Number,
+      unique: true,
+      sparse: true,
+    },
+    vkUsername: {
+      type: String,
+      default: null,
+    },
+    // Согласия пользователя (для ФЗ-152)
+    consents: {
+      personalData: {
+        agreed: { type: Boolean, default: false },
+        date: { type: Date, default: null },
+      },
+      privacyPolicy: {
+        agreed: { type: Boolean, default: false },
+        date: { type: Date, default: null },
+      },
+      marketing: {
+        agreed: { type: Boolean, default: false },
+        date: { type: Date, default: null },
+      },
+    },
+    // Запрос на удаление данных
+    deletionRequested: {
+      type: Boolean,
+      default: false,
+    },
+    deletionRequestedAt: {
+      type: Date,
+      default: null,
+    },
+    favoriteListings: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Listing',
+      },
+    ],
   },
   { timestamps: true }
 );

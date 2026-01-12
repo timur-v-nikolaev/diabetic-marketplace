@@ -15,6 +15,22 @@ export interface IUser {
   verificationNotes: string;
   isAdmin: boolean;
   favoriteSellers: any[];
+  favoriteListings: any[];
+  // Telegram Mini App поля
+  telegramId?: number;
+  telegramUsername?: string;
+  // VK Mini App поля
+  vkId?: number;
+  vkUsername?: string;
+  // Согласия пользователя (ФЗ-152)
+  consents?: {
+    personalData?: { agreed: boolean; date?: Date };
+    privacyPolicy?: { agreed: boolean; date?: Date };
+    marketing?: { agreed: boolean; date?: Date };
+  };
+  // Запрос на удаление данных
+  deletionRequested?: boolean;
+  deletionRequestedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

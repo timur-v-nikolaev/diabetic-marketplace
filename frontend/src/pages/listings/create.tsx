@@ -5,56 +5,53 @@ import { useAuth } from '../../hooks/useAuth';
 import { listingsAPI } from '../../services/api';
 
 const CATEGORIES = [
-  'Глюкометры',
-  'Тест-полоски',
-  'Шприцы',
-  'Инсулиновые помпы',
-  'Глюкозные мониторы',
-  'Ланцеты',
-  'Таблетки',
-  'Другое',
+  { id: 'glucometers', name: 'Глюкометры', icon: '🩸' },
+  { id: 'test-strips', name: 'Тест-полоски', icon: '📊' },
+  { id: 'syringes', name: 'Шприцы', icon: '💉' },
+  { id: 'pumps', name: 'Инсулиновые помпы', icon: '⚙️' },
+  { id: 'monitors', name: 'Глюкозные мониторы', icon: '📱' },
+  { id: 'lancets', name: 'Ланцеты', icon: '📍' },
+  { id: 'tablets', name: 'Таблетки', icon: '💊' },
+  { id: 'other', name: 'Другое', icon: '📦' },
 ];
 
 export default function CreateListing() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'Глюкометры',
+    category: '',
     price: '',
     city: '',
   });
   const [images, setImages] = useState<string[]>([]);
 
-  // Защита маршрута - только авторизованные пользователи
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-diabetes-50 via-white to-health-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-warm-900 mb-4">
-            Необходима авторизация
-          </h1>
-          <p className="text-warm-600 mb-8">
-            Пожалуйста, войдите в аккаунт для создания объявления
-          </p>
-          <Link
-            href="/auth/login"
-            className="px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg hover:shadow-medium transition-all"
-          >
-            Войти в аккаунт
-          </Link>
+      <div className="min-h-screen bg-gradient-to-b from-blue-500 to-blue-700 flex flex-col items-center justify-center px-4">
+        <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
+          <span className="text-4xl">🔒</span>
         </div>
+        <h1 className="text-2xl font-bold text-white mb-2">Требуется авторизация</h1>
+        <p className="text-blue-100 text-center mb-8">
+          Войдите для создания объявления
+        </p>
+        <Link
+          href="/auth/login"
+          className="px-8 py-4 bg-white text-blue-600 font-bold rounded-2xl shadow-lg"
+        >
+          Войти в аккаунт
+        </Link>
       </div>
     );
   }
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData({
       ...formData,
@@ -62,52 +59,41 @@ export default function CreateListing() {
     });
   };
 
+  const handleCategorySelect = (categoryName: string) => {
+    setFormData({ ...formData, category: categoryName });
+    setStep(2);
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    // Проверяем максимальное количество фотографий
     if (images.length >= 3) {
-      setError('Можно загрузить максимум 3 фотографии');
+      setError('Максимум 3 фотографии');
       return;
     }
 
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-    const newImages: string[] = [];
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
     const filesToProcess = Math.min(files.length, 3 - images.length);
 
-    let processed = 0;
     for (let i = 0; i < filesToProcess; i++) {
       const file = files[i];
       
-      // Проверка размера файла
       if (file.size > MAX_FILE_SIZE) {
-        setError(`Файл ${file.name} слишком большой. Максимум 5MB`);
+        setError(`Файл слишком большой. Максимум 5MB`);
         continue;
       }
       
-      // Проверка типа файла
       if (!file.type.startsWith('image/')) {
-        setError(`Файл ${file.name} не является изображением`);
+        setError(`Файл не является изображением`);
         continue;
       }
       
       const reader = new FileReader();
-      
       reader.onloadend = () => {
-        newImages.push(reader.result as string);
-        processed++;
-        
-        if (processed === filesToProcess) {
-          setImages([...images, ...newImages]);
-          setError('');
-        }
+        setImages(prev => [...prev, reader.result as string]);
+        setError('');
       };
-      
-      reader.onerror = () => {
-        setError('Ошибка при чтении файла');
-      };
-      
       reader.readAsDataURL(file);
     }
   };
@@ -122,15 +108,8 @@ export default function CreateListing() {
     setLoading(true);
 
     try {
-      // Валидация
-      if (
-        !formData.title ||
-        !formData.description ||
-        !formData.category ||
-        !formData.price ||
-        !formData.city
-      ) {
-        setError('Пожалуйста, заполните все обязательные поля');
+      if (!formData.title || !formData.description || !formData.category || !formData.price || !formData.city) {
+        setError('Заполните все обязательные поля');
         setLoading(false);
         return;
       }
@@ -141,8 +120,6 @@ export default function CreateListing() {
         return;
       }
 
-      console.log('Создаю объявление:', { ...formData, images });
-
       const response = await listingsAPI.create({
         title: formData.title,
         description: formData.description,
@@ -152,254 +129,305 @@ export default function CreateListing() {
         images,
       });
 
-      console.log('Объявление создано:', response);
-
-      // Перенаправляем на страницу объявления
       router.push(`/listings/${response.data._id}`);
     } catch (err: any) {
-      console.error('Ошибка при создании объявления:', err);
-      setError(
-        err.response?.data?.error || 'Ошибка при создании объявления'
-      );
+      setError(err.response?.data?.error || 'Ошибка при создании объявления');
     } finally {
       setLoading(false);
     }
   };
 
+  const nextStep = () => {
+    if (step === 2 && (!formData.title || !formData.description)) {
+      setError('Заполните название и описание');
+      return;
+    }
+    if (step === 3 && (!formData.price || !formData.city)) {
+      setError('Укажите цену и город');
+      return;
+    }
+    setError('');
+    setStep(step + 1);
+  };
+
+  const prevStep = () => setStep(step - 1);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-diabetes-50 via-white to-health-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/"
-            className="text-warm-600 hover:text-warm-700 font-medium mb-4 inline-flex items-center gap-2"
+    <div className="min-h-screen bg-gray-50 pb-24">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-500 to-blue-600 text-white sticky top-0 z-50">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
+          <button
+            onClick={() => step === 1 ? router.back() : prevStep()}
+            className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center"
           >
-            ← На главную
-          </Link>
-          <h1 className="text-4xl font-bold text-warm-900 mb-2">
-            Создать объявление
-          </h1>
-          <p className="text-warm-600">
-            Продайте свой товар или услугу для людей с диабетом
-          </p>
+            <span className="text-xl">←</span>
+          </button>
+          <div className="flex-1">
+            <h1 className="font-bold">Создать объявление</h1>
+            <p className="text-blue-100 text-sm">Шаг {step} из 4</p>
+          </div>
         </div>
+        {/* Progress Bar */}
+        <div className="h-1 bg-white/20">
+          <div 
+            className="h-full bg-white transition-all duration-300"
+            style={{ width: `${(step / 4) * 100}%` }}
+          ></div>
+        </div>
+      </header>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-medium border border-warm-200 p-8">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <span className="text-red-600 mt-1">⚠️</span>
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 rounded-2xl flex items-center gap-3">
+            <span className="text-2xl">⚠️</span>
+            <p className="text-red-600 font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Step 1: Category */}
+        {step === 1 && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Выберите категорию</h2>
+            <p className="text-gray-500 mb-6">Это поможет покупателям найти ваш товар</p>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategorySelect(cat.name)}
+                  className={`p-4 rounded-2xl text-left transition-all ${
+                    formData.category === cat.name
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30'
+                      : 'bg-white shadow-sm hover:shadow-md'
+                  }`}
+                >
+                  <span className="text-3xl mb-2 block">{cat.icon}</span>
+                  <span className={`font-semibold ${
+                    formData.category === cat.name ? 'text-white' : 'text-gray-800'
+                  }`}>
+                    {cat.name}
+                  </span>
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Title */}
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-semibold text-warm-900 mb-2"
-              >
-                Название объявления *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                placeholder="Например: Глюкометр Accu-Chek"
-                maxLength={100}
-                className="w-full px-4 py-3 border-2 border-primary-300 rounded-lg focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all"
-              />
-              <p className="text-xs text-warm-600 mt-1">
-                {formData.title.length}/100 символов
-              </p>
-            </div>
+        {/* Step 2: Details */}
+        {step === 2 && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Опишите товар</h2>
+            <p className="text-gray-500 mb-6">Подробное описание увеличит шансы на продажу</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Название *
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  placeholder="Например: Глюкометр Accu-Chek"
+                  maxLength={100}
+                  className="w-full px-4 py-3.5 bg-white border-2 border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 transition-all text-gray-900"
+                />
+                <p className="text-xs text-gray-400 mt-1 text-right">{formData.title.length}/100</p>
+              </div>
 
-            {/* Description */}
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-semibold text-warm-900 mb-2"
-              >
-                Описание *
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Опишите состояние товара, его особенности, причину продажи и т.д."
-                maxLength={1000}
-                rows={5}
-                className="w-full px-4 py-3 border-2 border-primary-300 rounded-lg focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all resize-none"
-              />
-              <p className="text-xs text-warm-600 mt-1">
-                {formData.description.length}/1000 символов
-              </p>
-            </div>
-
-            {/* Category */}
-            <div>
-              <label
-                htmlFor="category"
-                className="block text-sm font-semibold text-warm-900 mb-2"
-              >
-                Категория *
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-primary-300 rounded-lg focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all"
-              >
-                {CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Price */}
-            <div>
-              <label
-                htmlFor="price"
-                className="block text-sm font-semibold text-warm-900 mb-2"
-              >
-                Цена (руб.) *
-              </label>
-              <input
-                type="number"
-                id="price"
-                name="price"
-                value={formData.price}
-                onChange={handleChange}
-                placeholder="1000"
-                min="1"
-                className="w-full px-4 py-3 border-2 border-primary-300 rounded-lg focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all"
-              />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Описание *
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Опишите состояние, особенности, причину продажи..."
+                  maxLength={1000}
+                  rows={5}
+                  className="w-full px-4 py-3.5 bg-white border-2 border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 transition-all text-gray-900 resize-none"
+                />
+                <p className="text-xs text-gray-400 mt-1 text-right">{formData.description.length}/1000</p>
+              </div>
             </div>
 
-            {/* City */}
-            <div>
-              <label
-                htmlFor="city"
-                className="block text-sm font-semibold text-warm-900 mb-2"
-              >
-                Город *
-              </label>
-              <input
-                type="text"
-                id="city"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                placeholder="Москва"
-                className="w-full px-4 py-3 border-2 border-primary-300 rounded-lg focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-200 transition-all"
-              />
-            </div>
-
-            {/* Image Upload */}
-            <div>
-              <label className="block text-sm font-semibold text-warm-900 mb-2">
-                Фотографии товара (до 3 штук)
-              </label>
-              
-              {/* Превью загруженных изображений */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  {images.map((img, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={img}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg border-2 border-primary-300"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Кнопка загрузки */}
-              {images.length < 3 && (
-                <div className="border-2 border-dashed border-primary-300 rounded-lg p-6 text-center hover:border-diabetes-600 transition-all cursor-pointer">
-                  <input
-                    type="file"
-                    id="image"
-                    name="image"
-                    onChange={handleImageChange}
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                  />
-                  <label htmlFor="image" className="cursor-pointer">
-                    <p className="text-2xl mb-2">📷</p>
-                    <p className="text-warm-900 font-medium">
-                      Нажмите для загрузки фото
-                    </p>
-                    <p className="text-xs text-warm-600 mt-1">
-                      или перетащите файлы сюда ({images.length}/3)
-                    </p>
-                  </label>
-                </div>
-              )}
-
-              {images.length === 3 && (
-                <p className="text-sm text-primary-600 font-medium mt-2">
-                  ✓ Загружено максимальное количество фотографий
-                </p>
-              )}
-            </div>
-
-            {/* Info Box */}
-            <div className="bg-warm-50 border border-warm-300 rounded-lg p-4">
-              <p className="text-sm text-warm-700">
-                <span className="font-semibold">ℹ️ Совет:</span> Добавьте четкие
-                фотографии товара и укажите все детали, чтобы увеличить шансы
-                на продажу.
-              </p>
-            </div>
-
-            {/* Submit Button */}
             <button
-              type="submit"
+              onClick={nextStep}
+              className="w-full mt-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30"
+            >
+              Далее →
+            </button>
+          </div>
+        )}
+
+        {/* Step 3: Price & Location */}
+        {step === 3 && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Цена и местоположение</h2>
+            <p className="text-gray-500 mb-6">Укажите стоимость и ваш город</p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Цена (₽) *
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="1000"
+                    min="1"
+                    className="w-full px-4 py-3.5 bg-white border-2 border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 transition-all text-gray-900 text-2xl font-bold"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">₽</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Город *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city}
+                  onChange={handleChange}
+                  placeholder="Москва"
+                  className="w-full px-4 py-3.5 bg-white border-2 border-gray-100 rounded-xl focus:outline-none focus:border-blue-500 transition-all text-gray-900"
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={nextStep}
+              className="w-full mt-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30"
+            >
+              Далее →
+            </button>
+          </div>
+        )}
+
+        {/* Step 4: Photos & Submit */}
+        {step === 4 && (
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">Добавьте фото</h2>
+            <p className="text-gray-500 mb-6">Хорошие фото увеличивают продажи на 50%</p>
+            
+            {/* Images Preview */}
+            {images.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {images.map((img, index) => (
+                  <div key={index} className="relative aspect-square rounded-2xl overflow-hidden">
+                    <img src={img} alt={`Preview ${index + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Upload Button */}
+            {images.length < 3 && (
+              <label className="block w-full aspect-video bg-white border-2 border-dashed border-gray-200 rounded-2xl cursor-pointer hover:border-blue-500 transition-all">
+                <input
+                  type="file"
+                  onChange={handleImageChange}
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                />
+                <div className="h-full flex flex-col items-center justify-center">
+                  <span className="text-5xl mb-3">📷</span>
+                  <p className="text-gray-800 font-semibold">Добавить фото</p>
+                  <p className="text-gray-400 text-sm">{images.length}/3 загружено</p>
+                </div>
+              </label>
+            )}
+
+            {/* Summary */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-2xl">
+              <h3 className="font-bold text-gray-800 mb-3">Проверьте данные:</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Категория:</span>
+                  <span className="font-semibold text-gray-800">{formData.category}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Название:</span>
+                  <span className="font-semibold text-gray-800 truncate max-w-[200px]">{formData.title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Цена:</span>
+                  <span className="font-bold text-blue-600">{parseInt(formData.price || '0').toLocaleString()} ₽</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Город:</span>
+                  <span className="font-semibold text-gray-800">{formData.city}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Фото:</span>
+                  <span className="font-semibold text-gray-800">{images.length} шт.</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
               disabled={loading}
-              className="w-full px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-lg hover:shadow-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full mt-6 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl shadow-lg shadow-green-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <span className="inline-block animate-spin">⏳</span>
-                  Создание объявления...
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Создание...</span>
                 </>
               ) : (
                 <>
-                  <span>📋</span>
-                  Создать объявление
+                  <span>✓</span>
+                  <span>Опубликовать</span>
                 </>
               )}
             </button>
-
-            {/* Cancel Button */}
-            <Link
-              href="/"
-              className="w-full px-6 py-3 border-2 border-primary-300 text-warm-900 font-semibold rounded-lg hover:bg-warm-50 transition-all text-center"
-            >
-              Отмена
-            </Link>
-          </form>
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 safe-area-pb">
+        <div className="max-w-2xl mx-auto flex justify-around">
+          <Link href="/" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-xl">🏠</span>
+            <span className="text-xs">Главная</span>
+          </Link>
+          <Link href="/listings" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-xl">📋</span>
+            <span className="text-xs">Объявления</span>
+          </Link>
+          <div className="flex flex-col items-center gap-1 text-blue-500">
+            <div className="w-12 h-12 -mt-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-white text-2xl">+</span>
+            </div>
+          </div>
+          <Link href="/messages" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-xl">💬</span>
+            <span className="text-xs">Сообщения</span>
+          </Link>
+          <Link href="/auth/profile" className="flex flex-col items-center gap-1 text-gray-400">
+            <span className="text-xl">👤</span>
+            <span className="text-xs">Профиль</span>
+          </Link>
+        </div>
+      </nav>
     </div>
   );
 }

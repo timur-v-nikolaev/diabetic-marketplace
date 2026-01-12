@@ -29,8 +29,8 @@ export const initSentry = (app: Express) => {
     beforeSend(event) {
       // Удаляем пароли и токены из данных
       if (event.request?.data) {
-        const data = event.request.data;
-        if (typeof data === 'object') {
+        const data = event.request.data as Record<string, unknown>;
+        if (typeof data === 'object' && data !== null) {
           delete data.password;
           delete data.token;
           delete data.authorization;
@@ -66,18 +66,17 @@ export const sentryUserContext = (req: Request, res: Response, next: NextFunctio
 /**
  * Middleware для отлова ошибок и отправки в Sentry
  */
-export const sentryErrorHandler = Sentry.Handlers?.errorHandler?.() || ((err: Error, req: Request, res: Response, next: NextFunction) => {
+export const sentryErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  Sentry.captureException(err);
   next(err);
-});
+};
 
 /**
  * Middleware для трейсинга запросов
  */
-export const sentryRequestHandler = Sentry.Handlers?.requestHandler?.() || ((req: Request, res: Response, next: NextFunction) => {
+export const sentryRequestHandler = (req: Request, res: Response, next: NextFunction) => {
   next();
-});
-
-/**
+};
  * Ручная отправка ошибки в Sentry
  */
 export const captureError = (error: Error, context?: Record<string, any>) => {
