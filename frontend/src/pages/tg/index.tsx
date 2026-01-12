@@ -38,22 +38,29 @@ export default function TGHome() {
   const { hapticFeedback } = useTelegram();
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [apiUrl, setApiUrl] = useState<string>('');
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
 
   useEffect(() => {
+    // Debug: показываем какой API URL используется
+    setApiUrl(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api');
     loadListings();
   }, [selectedCategory]);
 
   const loadListings = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await listingsAPI.getAll({
         category: selectedCategory || undefined,
         limit: 20,
       });
       setListings(response.data?.listings || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Ошибка загрузки:', err);
+      setError(err.message || 'Ошибка загрузки данных');
       setListings([]);
     } finally {
       setLoading(false);
@@ -149,7 +156,23 @@ export default function TGHome() {
           </div>
 
           {loading ? (
-            <AvitoLoading type="skeleton" count={6} />
+            <div>
+              <AvitoLoading type="skeleton" count={6} />
+              <p className="text-xs text-center text-avito-text-muted mt-2">API: {apiUrl}</p>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <p className="text-5xl mb-4">⚠️</p>
+              <h3 className="font-medium text-avito-text mb-2">Ошибка загрузки</h3>
+              <p className="text-sm text-avito-text-secondary mb-2">{error}</p>
+              <p className="text-xs text-avito-text-muted mb-4">API: {apiUrl}</p>
+              <button
+                onClick={() => loadListings()}
+                className="px-4 py-2 bg-avito-blue text-white rounded text-sm"
+              >
+                Попробовать снова
+              </button>
+            </div>
           ) : filteredListings.length === 0 ? (
             <AvitoEmptyState
               title="Нет товаров"
